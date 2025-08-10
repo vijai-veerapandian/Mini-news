@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizNews Pro - Personalized Business News</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .news-card {
+            transition: all 0.3s ease;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .modal {
+            display: none;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-sans">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-xl font-bold text-gray-900">
+                            <i class="fas fa-newspaper text-blue-600"></i> BizNews Pro
+                        </h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div id="authButtons" class="flex space-x-2">
+                        <button onclick="showModal('loginModal')"
+                            class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
+                            Login
+                        </button>
+                        <button onclick="showModal('registerModal')"
+                            class="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700">
+                            Sign Up
+                        </button>
+                    </div>
+                    <div id="userMenu" class="hidden flex items-center space-x-4">
+                        <span id="userName" class="text-gray-700 text-sm"></span>
+                        <button onclick="logout()"
+                            class="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Welcome Section -->
+        <section id="welcomeSection" class="mb-8">
+            <div class="gradient-bg rounded-lg p-8 text-white text-center">
+                <h2 class="text-3xl font-bold mb-4">Stay Ahead with Personalized Business News</h2>
+                <p class="text-lg mb-6">Get curated business news based on your location, career, and interests</p>
+                <button onclick="showModal('registerModal')"
+                    class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    Get Started Free
+                </button>
+            </div>
+        </section>
+
+        <!-- News Dashboard (Hidden initially) -->
+        <div id="newsDashboard" class="hidden">
+            <!-- User Info -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900" id="userWelcome">Welcome back!</h3>
+                        <p class="text-gray-600" id="userLocation"></p>
+                    </div>
+                    <button onclick="refreshNews()"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- News Categories -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Local News -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-4 border-b">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i class="fas fa-map-marker-alt text-blue-600 mr-2"></i>
+                            Local Business
+                        </h3>
+                    </div>
+                    <div id="localNews" class="p-4">
+                        <div class="loading-spinner mx-auto"></div>
+                    </div>
+                </div>
+
+                <!-- Industry News -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-4 border-b">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i class="fas fa-industry text-green-600 mr-2"></i>
+                            Industry News
+                        </h3>
+                    </div>
+                    <div id="industryNews" class="p-4">
+                        <div class="loading-spinner mx-auto"></div>
+                    </div>
+                </div>
+
+                <!-- Global News -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-4 border-b">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i class="fas fa-globe text-purple-600 mr-2"></i>
+                            Global Business
+                        </h3>
+                    </div>
+                    <div id="globalNews" class="p-4">
+                        <div class="loading-spinner mx-auto"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="mt-8 bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Search News</h3>
+                <div class="flex gap-4">
+                    <input type="text" id="searchInput" placeholder="Search business news..."
+                        class="flex-1 border border-gray-300 rounded-md px-4 py-2 focus:ring-blue-500 focus:border-blue-500">
+                    <button onclick="searchNews()"
+                        class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+                <div id="searchResults" class="mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Trending News (Public) -->
+        <section class="mt-8">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">Trending Business News</h3>
+            <div id="trendingNews" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="loading-spinner mx-auto"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Login Modal -->
+    <div id="loginModal"
+        class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+            <form id="loginForm" onsubmit="login(event)">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex items-center justify-between">
+                    <button type="submit"
+                        class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        Login
+                    </button>
+                </div>
+            </form>
+            <button onclick="hideModal('loginModal')"
+                class="mt-4 w-full text-gray-600 hover:text-gray-800">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal"
+        class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-6 text-center">Sign Up</h2>
+            <form id="registerForm" onsubmit="register(event)">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="firstName">First Name</label>
+                        <input type="text" id="firstName" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="lastName">Last Name</label>
+                        <input type="text" id="lastName" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="email">Email</label>
+                    <input type="email" id="email" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="password">Password</label>
+                    <input type="password" id="password" required minlength="6"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="careerField">Career Field</label>
+                    <select id="careerField" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Select your career field</option>
+                        <option value="technology">Technology</option>
+                        <option value="finance">Finance</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="real_estate">Real Estate</option>
+                        <option value="retail">Retail</option>
+                        <option value="energy">Energy</option>
+                        <option value="manufacturing">Manufacturing</option>
+                        <option value="consulting">Consulting</option>
+                        <option value="legal">Legal</option>
+                        <option value="marketing">Marketing</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mb-6">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="city">City</label>
+                        <input type="text" id="city" placeholder="New York"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="state">State</label>
+                        <input type="text" id="state" placeholder="NY" maxlength="2"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="country">Country</label>
+                        <input type="text" id="country" placeholder="US" maxlength="2"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+                <button type="submit"
+                    class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    Sign Up
+                </button>
+            </form>
+            <button onclick="hideModal('registerModal')"
+                class="mt-4 w-full text-gray-600 hover:text-gray-800">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast bg-white border border-gray-300 rounded-lg shadow-lg p-4 max-w-sm">
+        <div class="flex items-center">
+            <div id="toastIcon" class="flex-shrink-0 w-6 h-6 mr-3"></div>
+            <div id="toastMessage" class="text-sm font-medium text-gray-900"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
