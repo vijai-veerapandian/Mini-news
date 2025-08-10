@@ -91,6 +91,8 @@ npm run dev
 npm start
 ```
 
+![frontend](2025-08-10-031644.jpg)
+
 5. **Access the application**
 Open http://localhost:3000 in your browser
 
