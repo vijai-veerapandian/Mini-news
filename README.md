@@ -183,14 +183,14 @@ POST /api/auth/register
 Content-Type: application/json
 
 {
-  "firstName": "John",
-  "lastName": "Doe", 
-  "email": "john.doe@example.com",
+  "firstName": "Vijai",
+  "lastName": "Veerapandian", 
+  "email": "vijai@example.com",
   "password": "securepassword123",
   "careerField": "technology",
-  "city": "San Francisco",
-  "state": "CA",
-  "country": "US"
+  "city": "Ottawa",
+  "state": "ON",
+  "country": "CA"
 }
 ```
 
@@ -200,7 +200,7 @@ POST /api/auth/login
 Content-Type: application/json
 
 {
-  "email": "john.doe@example.com",
+  "email": "vijai@example.com",
   "password": "securepassword123"
 }
 ```
